@@ -1,0 +1,5 @@
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+exclude rfi_downloader.egg-info
+recursive-include rfi_downloader/data *
+include LICENSE

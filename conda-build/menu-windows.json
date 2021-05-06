@@ -1,0 +1,12 @@
+{
+    "menu_name": "RFI-Downloader",
+    "menu_items":
+    [
+    {
+        "name": "Launch RFI-Downloader",
+        "pywscript": "${PYTHON_SCRIPTS}/rfi-downloader.py",
+        "workdir": "${PERSONALDIR}",
+        "icon": "${MENU_DIR}/RFI-Logo.ico"
+    }
+    ]
+}

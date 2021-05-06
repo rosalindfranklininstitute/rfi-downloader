@@ -1,0 +1,13 @@
+name: rfi-downloader
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.8
+  - gtk3
+  - pygobject
+  - setuptools
+  - pip
+  - adwaita-icon-theme
+  - librsvg
+  - libsoup
+  - bugsnag

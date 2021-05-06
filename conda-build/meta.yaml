@@ -1,0 +1,52 @@
+{% set name = "rfi-downloader" %}
+{% set version = "0.0.1" %}
+
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ..
+
+build:
+  number: 0
+  entry_points:
+    - rfi-downloader = rfi_downloader:main
+  skip: true  # [py<38]
+
+requirements:
+  host:
+    - pip
+    - python
+  run:
+    - pygobject
+    - python
+    - gtk3
+    - adwaita-icon-theme
+    - librsvg
+    - bugsnag
+    - libsoup
+
+test:
+  imports:
+    - rfi_downloader
+    - rfi_downloader.application
+    - rfi_downloader.utils
+    - rfi_downloader.utils.googleanalytics
+    - rfi_downloader.version
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/RosalindFranklinInstitute/rfi-downloader
+  summary: Batch downloader with Gtk GUI
+  license: BSD-3-Clause
+  license_family: BSD
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - tschoonj

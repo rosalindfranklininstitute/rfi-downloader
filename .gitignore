@@ -1,0 +1,8 @@
+default.profraw
+rfi_downloader.egg-info
+__pycache__
+dist
+build
+.ropeproject
+.env
+.vscode
