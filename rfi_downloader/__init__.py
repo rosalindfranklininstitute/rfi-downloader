@@ -1,7 +1,5 @@
 import logging
 import sys
-import os
-from pathlib import PurePath
 
 import bugsnag
 from bugsnag.handlers import BugsnagHandler
