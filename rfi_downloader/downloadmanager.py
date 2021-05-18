@@ -19,6 +19,7 @@ class DownloadManager(GObject.Object):
         self._running: bool = False
         self._paused: bool = False
         self._finished: bool = False
+        self._should_stop: bool = False
         self._max_active_urls: int = 1  # this could become a configurable parameter
         self._active_urls: int = 0
 
@@ -61,21 +62,12 @@ class DownloadManager(GObject.Object):
 
     def stop(self):
         # remove timeout
+        logger.debug(f"Calling downloadmanager.stop")
         if not self._running:
             raise NotYetRunning(
                 "The download manager needs to be started before it can be stopped."
             )
-
-        GLib.source_remove(self._timeout_id)
-        with self._model_lock:
-            for url in self._appwindow._model:
-                if url.props.running:
-                    url.stop()
-
-        self._running = False
-        self.notify("running")
-        self._finished = True
-        self.notify("finished")
+        self._should_stop = True
 
     def _url_finished_cb(self, url, param):
         with self._model_lock:
@@ -88,10 +80,17 @@ class DownloadManager(GObject.Object):
             for url in self._appwindow._model:
                 if url.props.finished:
                     number_of_finished_urls += 1
+                elif self._should_stop and url.props.running:
+                    logger.debug(f"Calling url.stop")
+                    url.stop()
                 elif self._paused and not url.props.paused and url.props.running:
                     # pause if necessary
                     url.pause()
-                elif not self._paused and self._active_urls < self._max_active_urls:
+                elif (
+                    not self._should_stop
+                    and not self._paused
+                    and self._active_urls < self._max_active_urls
+                ):
                     # resume or start
                     url.start()
                     self._active_urls += 1

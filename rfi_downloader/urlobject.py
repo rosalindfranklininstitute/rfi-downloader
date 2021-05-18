@@ -106,6 +106,8 @@ class URLObject(GObject.Object):
             cancellable=self._cancellable,
             callback=self._send_async_cb,
         )
+        self._running = True
+        self.notify("running")
 
     def _abort(self):
         if self._inputstream:
@@ -271,7 +273,14 @@ class URLObject(GObject.Object):
         )
 
     def stop(self):
-        pass
+        logger.debug(f"Calling stop")
+        if self._finished:
+            return
+        if self._paused:
+            pass  # unpause first
+        if self._running:
+            logger.debug(f"Cancelling")
+            self._cancellable.cancel()
 
     def pause(self):
         pass

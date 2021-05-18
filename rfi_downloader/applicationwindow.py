@@ -236,7 +236,10 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         pass
 
     def on_stop(self, action, param):
-        pass
+        self.lookup_action("stop").set_enabled(False)
+        self.lookup_action("pause").set_enabled(False)
+        self.lookup_action("play").set_enabled(False)
+        self._download_manager.stop()
 
     def on_minimize(self, action, param):
         self.iconify()

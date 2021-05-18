@@ -1,8 +1,7 @@
 import gi
 
 gi.require_version("Gtk", "3.0")
-gi.require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gdk, Gio, GLib, Pango
+from gi.repository import Gtk, Pango
 
 from .urlobject import URLObject
 from .utils import EXPAND_AND_FILL
