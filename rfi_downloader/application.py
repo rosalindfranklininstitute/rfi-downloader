@@ -16,7 +16,7 @@ from .version import __version__
 from .utils import add_action_entries
 from .utils.googleanalytics import GoogleAnalyticsContext
 
-# from .applicationwindow import ApplicationWindow
+from .applicationwindow import ApplicationWindow
 
 logger = logging.getLogger(__name__)
 
@@ -141,12 +141,7 @@ class Application(Gtk.Application):
             dialog.destroy()
 
     def do_activate(self):
-        window = Gtk.ApplicationWindow(application=self)
-        #        window = ApplicationWindow(
-        #            application=self,
-        #            title="RFI-Downloader",
-        #            type=Gtk.WindowType.TOPLEVEL,
-        #        )
+        window = ApplicationWindow(application=self)
         window.show_all()
 
     def on_about(self, action, param):
@@ -171,11 +166,11 @@ class Application(Gtk.Application):
             self.get_windows(),
         )
 
-        # for index, window in enumerate(windows):
-        #    if window.active_engine.props.running:
-        #        window.close()
-        #    else:
-        #        self.remove_window(window)
+        for window in windows:
+            if window.download_manager.props.running:
+                window.close()
+            else:
+                self.remove_window(window)
 
     def on_help_url(self, action, param):
         webbrowser.open_new_tab(param.get_string())
