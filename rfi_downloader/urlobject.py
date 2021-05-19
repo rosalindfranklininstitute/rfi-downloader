@@ -7,6 +7,7 @@ from gi.repository import GObject, Soup, Gio, GLib
 
 import logging
 import time
+from threading import RLock
 
 logger = logging.getLogger(__name__)
 
@@ -78,10 +79,13 @@ class URLObject(GObject.Object):
         self._paused: bool = False
         self._finished: bool = False
         self._error_message: str = None
+        self._should_pause: bool = False
 
         self._inputstream: Gio.InputStream = None
         self._outputstream: Gio.FileOutputStream = None
         self._cancellable = Gio.Cancellable()
+        self._pause_main_loop: GLib.MainLoop = None
+        self._pause_lock = RLock()
 
     def do_get_property(self, prop):
         if hasattr(self, f"_{prop.name}"):
@@ -100,6 +104,16 @@ class URLObject(GObject.Object):
 
     def start(self):
         logger.debug(f"Starting {self._url}")
+
+        with self._pause_lock:
+            if self._paused:
+                logger.debug("Resuming download")
+                self._pause_main_loop.quit()
+                self._pause_main_loop = None
+                self._paused = False
+                self.notify("paused")
+                return
+
         self._message = Soup.Message(method="GET", uri=Soup.URI.new(self._url))
         session.send_async(
             msg=self._message,
@@ -220,6 +234,17 @@ class URLObject(GObject.Object):
     def _read_bytes_async_cb(
         self, inputstream: Gio.InputStream, result: Gio.AsyncResult, *user_data
     ):
+        with self._pause_lock:
+            if self._should_pause:
+                self._pause_main_loop = GLib.MainLoop.new(None, False)
+                self._should_pause = False
+                self._paused = True
+                self.notify("paused")
+
+        # this has to be done outside the mutex as it will start a blocking loop
+        if self._pause_main_loop:
+            self._pause_main_loop.run()
+
         try:
             gbytes: GLib.Bytes = inputstream.read_bytes_finish(result)
         except GLib.Error as e:
@@ -276,11 +301,20 @@ class URLObject(GObject.Object):
         logger.debug(f"Calling stop")
         if self._finished:
             return
-        if self._paused:
-            pass  # unpause first
+        with self._pause_lock:
+            if self._paused:
+                self._pause_main_loop.quit()
+                self._paused = (
+                    False  # no need to bother with notifications at this point
+                )
+
         if self._running:
             logger.debug(f"Cancelling")
             self._cancellable.cancel()
 
     def pause(self):
-        pass
+        logger.debug(f"Calling pause")
+        with self._pause_lock:
+            if self._paused or self._should_pause or not self._running:
+                return
+            self._should_pause = True

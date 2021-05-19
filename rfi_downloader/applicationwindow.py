@@ -176,6 +176,10 @@ class ApplicationWindow(Gtk.ApplicationWindow):
 
         lb.bind_model(model=self._model, create_widget_func=self._create_widget_func)
 
+        self._download_manager.connect(
+            "notify::paused", self._download_manager_paused_changed
+        )
+
     def _create_widget_func(self, url_object: URLObject, *user_data):
         logger.debug(f"Calling _create_widget_func for {url_object.props.filename}")
         rv = URLListBoxRow(url_object)
@@ -218,6 +222,12 @@ class ApplicationWindow(Gtk.ApplicationWindow):
 
     def on_play(self, action, param):
         self.lookup_action("play").set_enabled(False)
+
+        if self._download_manager.props.paused:
+            self.lookup_action("stop").set_enabled(False)
+            self._download_manager.start()
+            return
+
         self._urls_file_button.set_sensitive(False)
         self._destination_button.set_sensitive(False)
         task_window = LongTaskWindow(self)
@@ -233,7 +243,17 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         PreflightCheckThread(self, task_window).start()
 
     def on_pause(self, action, param):
-        pass
+        self.lookup_action("play").set_enabled(False)
+        self.lookup_action("pause").set_enabled(False)
+        self.lookup_action("stop").set_enabled(False)
+        self._download_manager.pause()
+
+    def _download_manager_paused_changed(self, download_manager, param):
+        if download_manager.props.paused is True:
+            self.lookup_action("play").set_enabled(True)
+        else:
+            self.lookup_action("pause").set_enabled(True)
+        self.lookup_action("stop").set_enabled(True)
 
     def on_stop(self, action, param):
         self.lookup_action("stop").set_enabled(False)
