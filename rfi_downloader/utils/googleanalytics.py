@@ -5,7 +5,7 @@ import gi
 gi.require_version("Soup", "2.4")
 from gi.repository import Soup
 
-from . import ExitableThread
+from . import ExitableThread, Session
 from ..version import __version__
 
 import logging
@@ -23,7 +23,7 @@ class GoogleAnalyticsConsumer(ExitableThread):
         super().__init__()
         self.daemon = True
         self._context = context
-        self._session = Soup.Session()
+        self._session = Session()
 
     def run(self):
         while not self.should_exit:

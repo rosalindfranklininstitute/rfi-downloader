@@ -9,10 +9,12 @@ import logging
 import time
 from threading import RLock
 
+from .utils import Session
+
 logger = logging.getLogger(__name__)
 
 # use a global session object
-session = Soup.Session()
+session = Session()
 
 # read in blocks of 1MB
 block_size = 1024 * 1024

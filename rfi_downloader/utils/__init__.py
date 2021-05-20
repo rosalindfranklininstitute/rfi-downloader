@@ -3,7 +3,8 @@ from __future__ import annotations
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gio, GLib, Gtk
+gi.require_version("Soup", "2.4")
+from gi.repository import Gio, GLib, Gtk, Soup
 
 from typing import (
     Callable,
@@ -18,6 +19,7 @@ import os
 import platform
 from threading import Thread
 import time
+from pathlib import PurePath
 
 EXPAND_AND_FILL: Final[Dict[str, Any]] = dict(
     hexpand=True, vexpand=True, halign=Gtk.Align.FILL, valign=Gtk.Align.FILL
@@ -115,3 +117,23 @@ class ExitableThread(Thread):
     @should_exit.setter
     def should_exit(self, value: bool):
         self._should_exit = value
+
+
+class Session(Soup.Session):
+    def __init__(self, **kwargs):
+        super().__init__(use_thread_context=True, **kwargs)
+
+        # Use conda OpenSSL certificates on Windows
+        if os.name == "nt" and "CONDA_PREFIX" in os.environ:
+            ca_file = PurePath(
+                os.environ["CONDA_PREFIX"], "Library", "ssl", "cacert.pem"
+            )
+            try:
+                db = Gio.TlsFileDatabase.new(str(ca_file))
+            except GLib.Error as e:
+                logger.warning(
+                    f"Could not create TLS database for {str(ca_file)} -> {e.message}"
+                )
+            else:
+                self.props.tls_database = db
+                self.props.ssl_use_system_ca_file = False
