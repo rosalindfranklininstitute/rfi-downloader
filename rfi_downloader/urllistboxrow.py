@@ -7,7 +7,6 @@ from .urlobject import URLObject
 from .utils import EXPAND_AND_FILL
 
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +55,10 @@ class URLListBoxRow(Gtk.ListBoxRow):
 
         grid.attach(
             Gtk.Label(
-                label=f"<b>{os.path.basename(url_object.props.filename)}</b>",
+                # label="Bad filename",
+                label=f"<b>{url_object.props.relative_path}</b>",
                 use_markup=True,
-                ellipsize=Pango.EllipsizeMode.END,
+                ellipsize=Pango.EllipsizeMode.START,
                 halign=Gtk.Align.START,
                 valign=Gtk.Align.CENTER,
                 hexpand=True,
@@ -81,7 +81,7 @@ class URLListBoxRow(Gtk.ListBoxRow):
         self._status_label = Gtk.Label(
             label=f"Download not started",
             use_markup=True,
-            ellipsize=Pango.EllipsizeMode.END,
+            ellipsize=Pango.EllipsizeMode.START,
             halign=Gtk.Align.START,
             valign=Gtk.Align.CENTER,
             hexpand=True,

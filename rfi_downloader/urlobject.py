@@ -49,6 +49,13 @@ class URLObject(GObject.Object):
             None,
             GObject.ParamFlags.READABLE,  # flags
         ),
+        "relative-path": (
+            str,  # type
+            "relative-path",  # nick
+            "relative-path",  # blurb
+            None,
+            GObject.ParamFlags.READABLE,  # flags
+        ),
         "running": (
             bool,
             "running",
@@ -72,11 +79,12 @@ class URLObject(GObject.Object):
         ),
     }
 
-    def __init__(self, url: str, filename: str):
+    def __init__(self, url: str, filename: str, relative_path: str):
         GObject.Object.__init__(self)
         self._progress: float = 0.0
         self._url: str = url
         self._filename: str = filename
+        self._relative_path: str = relative_path
         self._running: bool = False
         self._paused: bool = False
         self._finished: bool = False
@@ -90,14 +98,16 @@ class URLObject(GObject.Object):
         self._pause_lock = RLock()
 
     def do_get_property(self, prop):
-        if hasattr(self, f"_{prop.name}"):
-            return getattr(self, f"_{prop.name}")
+        py_prop_name: str = "_" + prop.name.replace("-", "_")
+        if hasattr(self, py_prop_name):
+            return getattr(self, py_prop_name)
         else:
             raise AttributeError("unknown property %s" % prop.name)
 
     def do_set_property(self, prop, value):
-        if hasattr(self, f"_{prop.name}"):
-            setattr(self, f"_{prop.name}", value)
+        py_prop_name: str = "_" + prop.name.replace("-", "_")
+        if hasattr(self, py_prop_name):
+            setattr(self, py_prop_name, value)
         else:
             raise AttributeError("unknown property %s" % prop.name)
 

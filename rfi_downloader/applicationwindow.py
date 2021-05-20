@@ -366,7 +366,11 @@ class PreflightCheckThread(Thread):
             path = PurePosixPath(urllib.parse.unquote(parsed.path[1:]))
             destination_file = os.path.join(self._appwindow._destination, *path.parts)
 
-            url_object = URLObject(line, destination_file)
+            url_object = URLObject(
+                url=line,
+                filename=destination_file,
+                relative_path=os.path.join(*path.parts),
+            )
             logger.debug(f"Appending {url_object.props.filename}")
             self._appwindow.model.append(url_object)
 
