@@ -11,3 +11,4 @@ dependencies:
   - librsvg
   - libsoup
   - bugsnag
+  - humanfriendly

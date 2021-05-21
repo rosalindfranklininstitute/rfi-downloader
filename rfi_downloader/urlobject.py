@@ -4,6 +4,7 @@ import gi
 
 gi.require_version("Soup", "2.4")
 from gi.repository import GObject, Soup, Gio, GLib
+from humanfriendly import format_timespan
 
 import logging
 import time
@@ -89,6 +90,7 @@ class URLObject(GObject.Object):
         self._paused: bool = False
         self._finished: bool = False
         self._error_message: str = None
+        self._status_message: str = None
         self._should_pause: bool = False
 
         self._inputstream: Gio.InputStream = None
@@ -113,6 +115,9 @@ class URLObject(GObject.Object):
 
     def get_error_message(self) -> str:
         return self._error_message
+
+    def get_status_message(self) -> str:
+        return self._status_message
 
     def start(self):
         logger.debug(f"Starting {self._url}")
@@ -203,7 +208,10 @@ class URLObject(GObject.Object):
 
         # Open the file for writing
         self._last_progress_update = time.time()
-        self._bytes_written = 0
+        self._total_bytes_written = 0
+        self._total_bytes_written_progress = (
+            0  # used only for updating the progressbars
+        )
         gfile: Gio.File = Gio.File.new_for_path(self._filename)
 
         # create the parent directories if necessary
@@ -268,6 +276,8 @@ class URLObject(GObject.Object):
             # EOF -> download complete
             logger.info(f"No bytes returned for {self._filename}")
             self._progress = 1.0
+            filesize_str = GLib.format_size(self._filesize)
+            self._status_message = f"{filesize_str} of {filesize_str}"
             self.notify("progress")
             self._abort()
             return
@@ -290,14 +300,25 @@ class URLObject(GObject.Object):
             self._abort()
             return
 
-        self._bytes_written += bytes_written
+        self._total_bytes_written += bytes_written
 
         now = time.time()
+        current_delta = now - self._last_progress_update
 
-        if (
-            (now - self._last_progress_update) > progress_notify_delta
-        ) and self._filesize > 0:
-            self._progress = self._bytes_written / self._filesize
+        if (current_delta > progress_notify_delta) and self._filesize > 0:
+            self._progress = self._total_bytes_written / self._filesize
+            speed = (
+                self._total_bytes_written - self._total_bytes_written_progress
+            ) / current_delta  # bytes/sec
+            self._total_bytes_written_progress = self._total_bytes_written
+            remaining_bytes = self._filesize - self._total_bytes_written
+            remaining_time = remaining_bytes / speed  # sec
+            self._status_message = (
+                f"{GLib.format_size_full(self._total_bytes_written, GLib.FormatSizeFlags.LONG_FORMAT)}"
+                + f" of {GLib.format_size(self._filesize)}"
+                + f" ({self._progress:.1%}, {GLib.format_size(speed)}/sec),"
+                + f" {format_timespan(remaining_time)} remaining"
+            )
             self._last_progress_update = now
             self.notify("progress")
 

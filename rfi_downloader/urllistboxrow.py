@@ -97,34 +97,26 @@ class URLListBoxRow(Gtk.ListBoxRow):
 
     def _progress_changed_cb(self, url_object: URLObject, param):
         self._progress_bar.set_fraction(url_object.props.progress)
-        self._status_label.props.label = (
-            f"Download {url_object.props.progress:%} completed"
-        )
+        self._status_label.props.label = url_object.get_status_message()
 
     def _paused_changed_cb(self, url_object: URLObject, param):
         if url_object.props.paused:
             self._status_label.props.label = (
-                f"Download paused at {url_object.props.progress:%} completed"
+                f"Paused at {url_object.props.progress:%} completed"
             )
         else:
-            self._status_label.props.label = (
-                f"Download {url_object.props.progress:%} completed"
-            )
+            self._status_label.props.label = url_object.get_status_message()
 
     def _running_changed_cb(self, url_object: URLObject, param):
         if url_object.props.running:
-            self._status_label.props.label = (
-                f"Download {url_object.props.progress:%} completed"
-            )
+            self._status_label.props.label = "Starting..."
 
     def _finished_changed_cb(self, url_object: URLObject, param):
         if url_object.props.finished:
             error_msg = url_object.get_error_message()
             if error_msg:
-                logger.warning(
+                logger.info(
                     f"Download failed for {url_object.props.filename}: {error_msg}"
                 )
                 # TODO: make error message visible to user (tooltip??)
                 self._status_label.props.label = f"Download failed!"
-            else:
-                self._status_label.props.label = f"Download completed!"

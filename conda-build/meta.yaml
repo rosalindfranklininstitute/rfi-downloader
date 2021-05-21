@@ -27,6 +27,7 @@ requirements:
     - librsvg
     - bugsnag
     - libsoup
+    - humanfriendly
 
 test:
   imports:
