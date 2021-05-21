@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Pango
+from gi.repository import Gtk, Pango, Gio
 
 from .urlobject import URLObject
 from .utils import EXPAND_AND_FILL
@@ -124,6 +126,7 @@ class URLListBoxRow(Gtk.ListBoxRow):
             error_msg = url_object.get_error_message()
             ctxt: Gtk.StyleContext = self._image.get_style_context()
             ctxt.remove_class("orange")
+            ga_ctxt = Gio.Application.get_default().google_analytics_context
             if error_msg:
                 logger.info(
                     f"Download failed for {url_object.props.filename}: {error_msg}"
@@ -132,8 +135,10 @@ class URLListBoxRow(Gtk.ListBoxRow):
                 self._status_label.props.label = f"Download failed!"
                 self.props.tooltip_text = error_msg
                 ctxt.add_class("red")
+                ga_ctxt.send_event("DOWNLOAD-FILE", "FAILURE")
             else:
                 ctxt.add_class("green")
+                ga_ctxt.send_event("DOWNLOAD-FILE", "SUCCESS")
 
     def do_query_tooltip(self, x, y, keyboard_mode, tooltip: Gtk.Tooltip):
         if (error_msg := self._url_object.get_error_message()) is None:
