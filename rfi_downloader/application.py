@@ -99,7 +99,6 @@ class Application(Gtk.Application):
         action_entries = (
             ("about", self.on_about),
             ("quit", self.on_quit),
-            ("open", self.on_open),
             ("new", lambda *_: self.do_activate()),
             ("help-url", self.on_help_url, "s"),
         )
@@ -111,55 +110,11 @@ class Application(Gtk.Application):
         accelerators = (
             ("app.quit", ("<Primary>Q",)),
             ("app.new", ("<Primary>N",)),
-            ("app.open", ("<Primary>O",)),
             ("win.close", ("<Primary>W",)),
         )
 
         for accel in accelerators:
             self.set_accels_for_action(accel[0], accel[1])
-
-    def on_open(self, action, param):
-        # fire up file chooser dialog
-        active_window = self.get_active_window()
-        dialog = Gtk.FileChooserNative(
-            modal=True,
-            title="Open file with URLs",
-            transient_for=active_window,
-            action=Gtk.FileChooserAction.OPEN,
-        )
-        filter = Gtk.FileFilter()
-        # TODO: add mime filter
-        filter.set_name("Plain text files")
-        dialog.add_filter(filter)
-
-        if dialog.run() == Gtk.ResponseType.ACCEPT:
-            urls_file = dialog.get_filename()
-            dialog.destroy()
-            try:
-                # TODO: open file
-                pass
-            except Exception as e:
-                dialog = Gtk.MessageDialog(
-                    transient_for=active_window,
-                    modal=True,
-                    destroy_with_parent=True,
-                    message_type=Gtk.MessageType.ERROR,
-                    buttons=Gtk.ButtonsType.CLOSE,
-                    text=f"Could not load {urls_file}",
-                    secondary_text=str(e),
-                )
-                dialog.run()
-                dialog.destroy()
-            else:
-                window = ApplicationWindow(
-                    application=self,
-                    type=Gtk.WindowType.TOPLEVEL,
-                    force_all=True,
-                )
-                window.show_all()
-                # window.load_from_yaml_dict(yaml_dict)
-        else:
-            dialog.destroy()
 
     def do_activate(self):
         window = ApplicationWindow(application=self)
