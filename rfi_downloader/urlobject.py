@@ -199,7 +199,7 @@ class URLObject(GObject.Object):
             self._message.props.status_code < 200
             or self._message.props.status_code >= 300
         ):
-            self._error_message = self._message.props.reason_phrase
+            self._error_message = f"{self._message.props.reason_phrase}: {self._message.props.status_code}"
             self._abort()
             return
 

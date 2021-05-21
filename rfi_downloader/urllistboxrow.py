@@ -19,7 +19,10 @@ class URLListBoxRow(Gtk.ListBoxRow):
             halign=Gtk.Align.FILL,
             valign=Gtk.Align.CENTER,
             activatable=False,
+            has_tooltip=True,
         )
+
+        self._url_object = url_object
 
         frame = Gtk.Frame(
             **EXPAND_AND_FILL,
@@ -120,3 +123,13 @@ class URLListBoxRow(Gtk.ListBoxRow):
                 )
                 # TODO: make error message visible to user (tooltip??)
                 self._status_label.props.label = f"Download failed!"
+                self.props.tooltip_text = error_msg
+
+    def do_query_tooltip(self, x, y, keyboard_mode, tooltip: Gtk.Tooltip):
+        if (error_msg := self._url_object.get_error_message()) is None:
+            return False
+
+        tooltip.set_icon_from_icon_name("network-error", Gtk.IconSize.LARGE_TOOLBAR)
+        tooltip.set_text(error_msg)
+
+        return True
