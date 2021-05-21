@@ -37,19 +37,23 @@ class URLListBoxRow(Gtk.ListBoxRow):
             margin_top=2,
             margin_left=2,
             margin_right=2,
+            column_spacing=4,
+            row_spacing=2,
         )
         frame.add(grid)
         self.add(frame)
 
+        self._image: Gtk.Image = Gtk.Image(
+            icon_name="emblem-downloads",
+            icon_size=Gtk.IconSize.DIALOG,
+            hexpand=False,
+            vexpand=True,
+            halign=Gtk.Align.START,
+            valign=Gtk.Align.CENTER,
+            name="color_image",
+        )
         grid.attach(
-            Gtk.Image(
-                icon_name="emblem-downloads",
-                icon_size=Gtk.IconSize.DIALOG,
-                hexpand=False,
-                vexpand=True,
-                halign=Gtk.Align.START,
-                valign=Gtk.Align.CENTER,
-            ),
+            self._image,
             0,
             0,
             1,
@@ -58,7 +62,6 @@ class URLListBoxRow(Gtk.ListBoxRow):
 
         grid.attach(
             Gtk.Label(
-                # label="Bad filename",
                 label=f"<b>{url_object.props.relative_path}</b>",
                 use_markup=True,
                 ellipsize=Pango.EllipsizeMode.START,
@@ -113,10 +116,14 @@ class URLListBoxRow(Gtk.ListBoxRow):
     def _running_changed_cb(self, url_object: URLObject, param):
         if url_object.props.running:
             self._status_label.props.label = "Starting..."
+            ctxt: Gtk.StyleContext = self._image.get_style_context()
+            ctxt.add_class("orange")
 
     def _finished_changed_cb(self, url_object: URLObject, param):
         if url_object.props.finished:
             error_msg = url_object.get_error_message()
+            ctxt: Gtk.StyleContext = self._image.get_style_context()
+            ctxt.remove_class("orange")
             if error_msg:
                 logger.info(
                     f"Download failed for {url_object.props.filename}: {error_msg}"
@@ -124,6 +131,9 @@ class URLListBoxRow(Gtk.ListBoxRow):
                 # TODO: make error message visible to user (tooltip??)
                 self._status_label.props.label = f"Download failed!"
                 self.props.tooltip_text = error_msg
+                ctxt.add_class("red")
+            else:
+                ctxt.add_class("green")
 
     def do_query_tooltip(self, x, y, keyboard_mode, tooltip: Gtk.Tooltip):
         if (error_msg := self._url_object.get_error_message()) is None:

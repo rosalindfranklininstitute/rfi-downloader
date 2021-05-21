@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import gi
 
+gi.require_version("Gdk", "3.0")
 gi.require_version("Gtk", "3.0")
-from gi.repository import GLib, Gio, Gtk, GdkPixbuf
+from gi.repository import GLib, Gio, Gtk, GdkPixbuf, Gdk
 
 import importlib.resources
 import platform
@@ -42,6 +43,26 @@ class Application(Gtk.Application):
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
+
+        # load CSS data
+        screen: Gdk.Screen = Gdk.Screen.get_default()
+        gtk_provider: Gtk.CssProvider = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_screen(
+            screen, gtk_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+        try:
+            gtk_provider.load_from_data(
+                """
+		        #color_image.red { background-image: linear-gradient(red,red); }
+		        #color_image.orange { background-image: linear-gradient(orange,orange); }
+		        #color_image.green { background-image: linear-gradient(green,green); }
+                """.encode(
+                    "utf-8"
+                )
+            )
+        except GLib.Error as e:
+            logger.warning(f"Could not load CSS data: {e.message}")
 
         # acquire google analytics context
         self._google_analytics_context = GoogleAnalyticsContext(
