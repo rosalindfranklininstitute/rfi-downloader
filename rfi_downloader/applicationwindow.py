@@ -180,11 +180,66 @@ class ApplicationWindow(Gtk.ApplicationWindow):
             "notify::paused", self._download_manager_paused_changed
         )
 
+        # connect delete-event signal handler
+        self.connect("delete-event", self._delete_event_cb)
+
     def _create_widget_func(self, url_object: URLObject, *user_data):
         logger.debug(f"Calling _create_widget_func for {url_object.props.filename}")
         rv = URLListBoxRow(url_object)
         rv.show_all()
         return rv
+
+    def _delete_event_dialog_timeout(self, dialog):
+        if self._download_manager.props.running:
+            return GLib.SOURCE_CONTINUE
+
+        dialog.response(Gtk.ResponseType.CLOSE)
+
+        return GLib.SOURCE_REMOVE
+
+    def _delete_event_killer(self, download_manager, _):
+        logger.debug("Calling _delete_event_killer")
+        if download_manager.props.running is False:
+            self.destroy()
+
+    def _delete_event_cb(self, window, event):
+        # If nothing is running, just close it down
+        if not self._download_manager.props.running:
+            return False
+
+        # else, pop up a dialog asking for confirmation
+        dialog = Gtk.MessageDialog(
+            buttons=Gtk.ButtonsType.OK_CANCEL,
+            message_type=Gtk.MessageType.QUESTION,
+            text="Files are still being downloaded!!",
+            secondary_text="Are you sure you want to close this window?",
+            transient_for=self,
+            modal=True,
+            destroy_with_parent=True,
+        )
+
+        source_id = GLib.timeout_add_seconds(
+            1, self._delete_event_dialog_timeout, dialog
+        )
+        rv = dialog.run()
+        dialog.destroy()
+        GLib.source_remove(source_id)
+
+        if rv in (Gtk.ResponseType.CANCEL, Gtk.ResponseType.DELETE_EVENT):
+            return True
+        elif rv in (Gtk.ResponseType.OK, Gtk.ResponseType.CLOSE):
+            if self._download_manager.props.running:
+                self._download_manager.disconnect(
+                    self._download_manager_finished_changed_handler_id
+                )
+                # hookup signal to downloadmanager running property
+                self._download_manager.connect(
+                    "notify::running", self._delete_event_killer
+                )
+                # stop it manually
+                self._download_manager.stop()
+                return True
+            return False
 
     @property
     def download_manager(self):

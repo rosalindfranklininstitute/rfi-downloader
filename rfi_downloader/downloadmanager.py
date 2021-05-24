@@ -122,6 +122,12 @@ class DownloadManager(GObject.Object):
                 self._finished = True
                 self.notify("finished")
                 return GLib.SOURCE_REMOVE
+            elif self._should_stop and number_of_running == 0:
+                self._should_stop = False
+                self._running = False
+                self.notify("running")
+                self._finished = True
+                self.notify("finished")
             elif self._should_pause and number_of_paused == number_of_running:
                 self._should_pause = False
                 self._paused = True
