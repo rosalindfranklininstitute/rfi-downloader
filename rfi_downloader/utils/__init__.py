@@ -75,7 +75,9 @@ def get_file_creation_timestamp(file_path: Union[os.PathLike, str]):
 
 
 class LongTaskWindow(Gtk.Window):
-    def __init__(self, parent_window: Optional[Gtk.Window] = None, *args, **kwargs):
+    def __init__(
+        self, parent_window: Optional[Gtk.Window] = None, *args, **kwargs
+    ):
         kwargs.update(
             dict(
                 transient_for=parent_window,
@@ -90,7 +92,9 @@ class LongTaskWindow(Gtk.Window):
             )
         )
         Gtk.Window.__init__(self, *args, **kwargs)
-        main_grid = Gtk.Grid(column_spacing=10, row_spacing=10, **EXPAND_AND_FILL)
+        main_grid = Gtk.Grid(
+            column_spacing=10, row_spacing=10, **EXPAND_AND_FILL
+        )
         self._label = Gtk.Label(wrap=True, **EXPAND_AND_FILL)
         main_grid.attach(self._label, 0, 0, 1, 1)
         label = Gtk.Label(

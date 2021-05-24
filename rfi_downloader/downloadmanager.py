@@ -22,7 +22,9 @@ class DownloadManager(GObject.Object):
         self._should_stop: bool = False
         self._should_pause: bool = False
         self._should_resume: bool = False
-        self._max_active_urls: int = 1  # this could become a configurable parameter
+        self._max_active_urls: int = (
+            1  # this could become a configurable parameter
+        )
         self._active_urls: int = 0
 
     @GObject.Property(type=bool, default=False)
@@ -92,7 +94,11 @@ class DownloadManager(GObject.Object):
                 elif self._should_stop and url.props.running:
                     logger.debug(f"Calling url.stop")
                     url.stop()
-                elif self._should_pause and not url.props.paused and url.props.running:
+                elif (
+                    self._should_pause
+                    and not url.props.paused
+                    and url.props.running
+                ):
                     # pause if necessary
                     url.pause()
                 elif (

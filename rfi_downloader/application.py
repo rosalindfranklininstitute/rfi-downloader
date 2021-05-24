@@ -70,7 +70,9 @@ class Application(Gtk.Application):
             tracking_id="UA-184737687-2",
             application_name="RFI-Downloader",
             application_version=__version__,
-            config_file=Path(GLib.get_user_config_dir(), "rfi-downloader", "ga.conf"),
+            config_file=Path(
+                GLib.get_user_config_dir(), "rfi-downloader", "ga.conf"
+            ),
         )
 
         # send event to Google Analytics
@@ -125,7 +127,9 @@ class Application(Gtk.Application):
         with importlib.resources.path(
             "rfi_downloader.data", "RFI-logo-transparent.png"
         ) as f:
-            logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(f), 300, -1, True)
+            logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                str(f), 300, -1, True
+            )
 
         about_dialog = Gtk.AboutDialog(
             transient_for=self.get_active_window(),

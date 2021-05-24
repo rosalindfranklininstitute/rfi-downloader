@@ -164,7 +164,9 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         )
         controls_grid.attach(self._destination_button, 2, 1, 1, 1)
 
-        sw = Gtk.ScrolledWindow(**EXPAND_AND_FILL, shadow_type=Gtk.ShadowType.IN)
+        sw = Gtk.ScrolledWindow(
+            **EXPAND_AND_FILL, shadow_type=Gtk.ShadowType.IN
+        )
         lb = Gtk.ListBox(**EXPAND_AND_FILL)
         sw.add(lb)
         main_grid.attach(sw, 0, 1, 1, 1)
@@ -174,7 +176,9 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         self._download_manager: Final[DownloadManager] = DownloadManager(self)
         self._model: Final[Gio.ListStore] = Gio.ListStore(item_type=URLObject)
 
-        lb.bind_model(model=self._model, create_widget_func=self._create_widget_func)
+        lb.bind_model(
+            model=self._model, create_widget_func=self._create_widget_func
+        )
 
         self._download_manager.connect(
             "notify::paused", self._download_manager_paused_changed
@@ -184,7 +188,9 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         self.connect("delete-event", self._delete_event_cb)
 
     def _create_widget_func(self, url_object: URLObject, *user_data):
-        logger.debug(f"Calling _create_widget_func for {url_object.props.filename}")
+        logger.debug(
+            f"Calling _create_widget_func for {url_object.props.filename}"
+        )
         rv = URLListBoxRow(url_object)
         rv.show_all()
         return rv
@@ -251,7 +257,11 @@ class ApplicationWindow(Gtk.ApplicationWindow):
 
     def _on_urls_file_selection_changed(self, button: Gtk.FileChooserButton):
         filename: Optional[str] = button.get_filename()
-        if filename and os.path.isfile(filename) and os.access(filename, os.R_OK):
+        if (
+            filename
+            and os.path.isfile(filename)
+            and os.access(filename, os.R_OK)
+        ):
             self._filename = filename
         else:
             self._filename = None
@@ -383,7 +393,9 @@ class ApplicationWindow(Gtk.ApplicationWindow):
 
 
 class PreflightCheckThread(Thread):
-    def __init__(self, appwindow: ApplicationWindow, task_window: LongTaskWindow):
+    def __init__(
+        self, appwindow: ApplicationWindow, task_window: LongTaskWindow
+    ):
         super().__init__()
         self._appwindow = appwindow
         self._task_window = task_window
@@ -415,11 +427,15 @@ class PreflightCheckThread(Thread):
                 continue
 
             if not parsed.path:
-                exception_msgs.append(f"URL {line} does not contain a path component")
+                exception_msgs.append(
+                    f"URL {line} does not contain a path component"
+                )
                 continue
 
             path = PurePosixPath(urllib.parse.unquote(parsed.path[1:]))
-            destination_file = os.path.join(self._appwindow._destination, *path.parts)
+            destination_file = os.path.join(
+                self._appwindow._destination, *path.parts
+            )
 
             url_object = URLObject(
                 url=line,

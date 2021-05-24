@@ -39,7 +39,9 @@ class GoogleAnalyticsConsumer(ExitableThread):
                 )
                 status = self._session.send_message(message)
                 if status != 200:
-                    logger.info(f"Could not send message to Google Analytics: {status}")
+                    logger.info(
+                        f"Could not send message to Google Analytics: {status}"
+                    )
 
             time.sleep(0.1)
 
@@ -69,7 +71,9 @@ class GoogleAnalyticsContext:
         else:
             _uuid = str(uuid.uuid4())
             try:
-                self._config_file.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                self._config_file.parent.mkdir(
+                    mode=0o700, parents=True, exist_ok=True
+                )
                 self._config_file.write_text(_uuid)
             except Exception:
                 pass
@@ -97,7 +101,9 @@ class GoogleAnalyticsContext:
     def consumer_thread(self):
         return self._consumer_thread
 
-    def send_event(self, category: str, action: str, label: Optional[str] = None):
+    def send_event(
+        self, category: str, action: str, label: Optional[str] = None
+    ):
         if len(category) > 150:
             logger.warning(f"Category {category} is too long")
             return

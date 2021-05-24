@@ -169,7 +169,10 @@ class URLObject(GObject.Object):
         # No need to make a fuss if this fails. It shouldn't though.
 
     def _output_stream_close_async_cb(
-        self, outputstream: Gio.FileOutputStream, result: Gio.AsyncResult, *user_data
+        self,
+        outputstream: Gio.FileOutputStream,
+        result: Gio.AsyncResult,
+        *user_data,
     ):
         try:
             outputstream.close_finish(result)
@@ -203,7 +206,9 @@ class URLObject(GObject.Object):
             self._abort()
             return
 
-        self._filesize = self._message.props.response_headers.get_content_length()
+        self._filesize = (
+            self._message.props.response_headers.get_content_length()
+        )
         logger.debug(f"File size: {self._filesize} for {self._filename}")
 
         # Open the file for writing
@@ -219,7 +224,9 @@ class URLObject(GObject.Object):
         try:
             if parent:
                 # there is no async variant of this method, otherwise I would have used it!
-                parent.make_directory_with_parents(cancellable=self._cancellable)
+                parent.make_directory_with_parents(
+                    cancellable=self._cancellable
+                )
         except GLib.Error as e:
             if e.code != Gio.IOErrorEnum.EXISTS:
                 self._error_message = e.message
@@ -235,7 +242,9 @@ class URLObject(GObject.Object):
             callback=self._replace_async_cb,
         )
 
-    def _replace_async_cb(self, gfile: Gio.File, result: Gio.AsyncResult, *user_data):
+    def _replace_async_cb(
+        self, gfile: Gio.File, result: Gio.AsyncResult, *user_data
+    ):
         try:
             self._outputstream = gfile.replace_finish(result)
         except GLib.Error as e:
@@ -291,7 +300,10 @@ class URLObject(GObject.Object):
             )
 
     def _write_bytes_async_cb(
-        self, outputstream: Gio.OutputStream, result: Gio.AsyncResult, *user_data
+        self,
+        outputstream: Gio.OutputStream,
+        result: Gio.AsyncResult,
+        *user_data,
     ):
         try:
             bytes_written = outputstream.write_bytes_finish(result)
