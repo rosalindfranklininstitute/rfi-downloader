@@ -37,10 +37,10 @@ class GoogleAnalyticsConsumer(ExitableThread):
                 message = Soup.form_request_new_from_hash(
                     "POST", self._context._endpoint, data
                 )
-                status = self._session.send_message(message)
-                if status != 200:
+                self._session.send(message)
+                if message.props.status_code != 200:
                     logger.info(
-                        f"Could not send message to Google Analytics: {status}"
+                        f"Could not send message to Google Analytics: {message.props.status}"
                     )
 
             time.sleep(0.1)
