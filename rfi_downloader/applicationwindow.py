@@ -336,7 +336,10 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         self._filename = filename
 
     def _preflight_check_cb(
-        self, task_window: LongTaskWindow, exception_msgs: Optional[List[str]]
+        self,
+        task_window: LongTaskWindow,
+        url_objects: List[URLObject],
+        exception_msgs: Optional[List[str]],
     ):
         task_window.get_window().set_cursor(None)
         task_window.destroy()
@@ -354,8 +357,11 @@ class ApplicationWindow(Gtk.ApplicationWindow):
             dialog.run()
             dialog.destroy()
             # if no valid urls were found, dont bother starting the download manager
-            if not len(self._model):
+            if not len(url_objects):
                 return
+
+        for url_object in url_objects:
+            self._model.append(url_object)
 
         self._download_manager_running_changed_handler_id = (
             self._download_manager.connect(
@@ -415,6 +421,7 @@ class PreflightCheckThread(Thread):
             return True
 
         lines = filter(_filter, lines)
+        url_objects: List[URLObject] = list()
 
         for line in lines:
             line = line.split()[0]  # ignore any rubbish following the url
@@ -443,11 +450,12 @@ class PreflightCheckThread(Thread):
                 relative_path=os.path.join(*path.parts),
             )
             logger.debug(f"Appending {url_object.props.filename}")
-            self._appwindow.model.append(url_object)
+            url_objects.append(url_object)
 
         GLib.idle_add(
             self._appwindow._preflight_check_cb,
             self._task_window,
+            url_objects,
             exception_msgs,
             priority=GLib.PRIORITY_DEFAULT_IDLE,
         )
