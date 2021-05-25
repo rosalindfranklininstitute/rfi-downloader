@@ -32,6 +32,7 @@ requirements:
 test:
   imports:
     - rfi_downloader
+    - rfi_downloader.__main__
     - rfi_downloader.application
     - rfi_downloader.applicationwindow
     - rfi_downloader.downloadmanager
@@ -43,6 +44,7 @@ test:
     - rfi_downloader.version
   commands:
     - pip check
+    - rfi-downloader -h
   requires:
     - pip
 
