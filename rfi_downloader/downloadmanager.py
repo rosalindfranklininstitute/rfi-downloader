@@ -102,7 +102,8 @@ class DownloadManager(GObject.Object):
                     # pause if necessary
                     url.pause()
                 elif (
-                    not self._should_stop
+                    self._running
+                    and not self._should_stop
                     and not self._paused
                     and not self._should_pause
                     and not self._should_resume
