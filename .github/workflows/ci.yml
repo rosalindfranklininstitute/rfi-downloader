@@ -3,12 +3,12 @@ name: CI
 on:
   schedule:
     - cron: '0 2 * * *' # run at 2 AM UTC
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
+  release:
+    types:
+      - created
 
 jobs:
   black-check:
@@ -62,3 +62,9 @@ jobs:
           conda create -n constructor -c defaults constructor
           conda activate constructor
           constructor conda-constructor
+      - name: Add artifacts to release
+        if: ${{ matrix.python-version == '3.9' && github.event_name == 'release' }}
+        uses: actions/upload-artifact@v2
+        with:
+          path: RFI-Downloader-*
+        
