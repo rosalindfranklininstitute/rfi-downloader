@@ -1,5 +1,5 @@
 name: RFI-Downloader
-version: 0.0.4
+version: 0.0.5
 company: Rosalind Franklin Institute
 channels:
     # The following three channels are on the VM itself
@@ -16,7 +16,7 @@ menu_packages:
     - rfi-downloader
 specs:
     - python 3.9.*
-    - rfi-downloader 0.0.4
+    - rfi-downloader 0.0.5
     - conda
     - menuinst # [win]
 initialize_by_default: false
