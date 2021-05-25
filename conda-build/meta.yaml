@@ -27,12 +27,18 @@ requirements:
     - librsvg
     - bugsnag
     - libsoup
+    - humanfriendly
 
 test:
   imports:
     - rfi_downloader
     - rfi_downloader.application
+    - rfi_downloader.applicationwindow
+    - rfi_downloader.downloadmanager
+    - rfi_downloader.urllistboxrow
+    - rfi_downloader.urlobject
     - rfi_downloader.utils
+    - rfi_downloader.utils.exceptions
     - rfi_downloader.utils.googleanalytics
     - rfi_downloader.version
   commands:

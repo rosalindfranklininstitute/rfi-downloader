@@ -11,10 +11,6 @@
 						<attribute name="action">app.new</attribute>
 					</item>
 					<item>
-						<attribute name="label">_Open</attribute>
-						<attribute name="action">app.open</attribute>
-					</item>
-					<item>
 						<attribute name="label">Close Window</attribute>
 						<attribute name="action">win.close</attribute>
 					</item>

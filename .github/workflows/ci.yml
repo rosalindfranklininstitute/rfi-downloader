@@ -3,28 +3,68 @@ name: CI
 on:
   schedule:
     - cron: '0 2 * * *' # run at 2 AM UTC
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
+  release:
+    types:
+      - created
 
 jobs:
+  black-check:
+    name: Run black check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Black
+        run: pip install black
+      - name: Run black --check .
+        run: black --check
+
   install:
     name: Test conda-build (Python ${{ matrix.python-version }} on ${{ matrix.os }})
+    needs: black-check
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.8", "3.9"]
+        include:
+          - os: ubuntu-latest
+            installer: Linux-x86_64.sh
+          - os: macos-latest
+            installer: MacOSX-x86_64.sh
+          - os: windows-latest
+            installer: Windows-x86_64.exe
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          auto-activate-base: true
+          installer-url: https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-${{ matrix.installer }}
       - name: Install conda-build
-        run: conda install -c conda-forge -y conda-build
+        run: conda install -c conda-forge -y conda-build conda-verify
       - name: Run conda-build
         timeout-minutes: 30
         run: conda build --quiet -c conda-forge --python ${{ matrix.python-version }} conda-build
+      - name: Initialize shell
+        run: conda init bash
+      - name: Build installer
+        timeout-minutes: 30
+        if: ${{ matrix.python-version == '3.9' }}
+        run: |
+          conda create -n constructor -c defaults constructor
+          conda activate constructor
+          constructor conda-constructor
+      - name: Add artifacts to release
+        if: ${{ matrix.python-version == '3.9' && github.event_name == 'release' }}
+        uses: actions/upload-artifact@v2
+        with:
+          path: RFI-Downloader-*
+        

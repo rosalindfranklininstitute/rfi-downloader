@@ -1,0 +1,26 @@
+name: RFI-Downloader
+version: 0.0.1
+company: Rosalind Franklin Institute
+channels:
+    # The following three channels are on the VM itself
+    # and may need updating if their conda installation prefix changes.
+    - file:///usr/share/miniconda3/envs/test/conda-bld/  # [linux]
+    - file:///C:/Miniconda3/envs/test/conda-bld/  # [win]
+    - file:///Users/runner/miniconda3/envs/test/conda-bld/ # [osx]
+    # remote channels
+    - https://conda.anaconda.org/conda-forge/
+    - https://repo.anaconda.com/pkgs/main/  # [win]
+    - https://repo.anaconda.com/pkgs/msys2/  # [win]
+ignore_duplicate_files: true
+menu_packages:
+    - rfi-downloader
+specs:
+    - python 3.9.*
+    - rfi-downloader 0.0.1
+    - conda
+    - menuinst # [win]
+initialize_by_default: false
+register_python_default: false
+welcome_image: welcome_image.jpg
+header_image: header_image.png
+icon_image: icon_image.png
