@@ -12,7 +12,7 @@ source:
 build:
   number: 0
   entry_points:
-    - rfi-downloader = rfi_downloader:main
+    - rfi-downloader = rfi_downloader.__main__:main
   skip: true  # [py<38]
 
 requirements:
