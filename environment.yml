@@ -9,6 +9,6 @@ dependencies:
   - pip
   - adwaita-icon-theme
   - librsvg
-  - libsoup
+  - libsoup<3
   - bugsnag
   - humanfriendly
