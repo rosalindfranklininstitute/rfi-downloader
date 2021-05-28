@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import gi
 
-gi.require_version("Gdk", "3.0")
-gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "4.0")
+gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gio, Gtk, GdkPixbuf, Gdk
 
 import importlib.resources
@@ -45,15 +45,17 @@ class Application(Gtk.Application):
         Gtk.Application.do_startup(self)
 
         # load CSS data
-        screen: Gdk.Screen = Gdk.Screen.get_default()
+        display: Gdk.Display = Gdk.Display.get_default()
         gtk_provider: Gtk.CssProvider = Gtk.CssProvider()
-        Gtk.StyleContext.add_provider_for_screen(
-            screen, gtk_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        Gtk.StyleContext.add_provider_for_display(
+            display, gtk_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
 
         try:
             gtk_provider.load_from_data(
                 """
+                .large-icons {-gtk-icon-size: 48px;}
+                window.aboutdialog image.large-icons {-gtk-icon-size: 300px;}
 		        #color_image.red { background-image: linear-gradient(red,red); }
 		        #color_image.orange { background-image: linear-gradient(orange,orange); }
 		        #color_image.green { background-image: linear-gradient(green,green); }
@@ -84,19 +86,11 @@ class Application(Gtk.Application):
             None,
         )
 
-        # this may need to be checked on other platforms as well
-        if platform.system() == "Darwin":
-            appmenus_str = importlib.resources.read_text(
-                "rfi_downloader.data", "menus-appmenu.ui"
-            )
-            builder = Gtk.Builder.new_from_string(appmenus_str, -1)
-            self.set_app_menu(builder.get_object("app-menu"))
-
         commonmenus_str = importlib.resources.read_text(
             "rfi_downloader.data", "menus-common.ui"
         )
         builder = Gtk.Builder.new_from_string(commonmenus_str, -1)
-        self.set_menubar(builder.get_object("menubar"))
+        self._menu_model = builder.get_object("menubar")
 
         action_entries = (
             ("about", self.on_about),
@@ -110,17 +104,21 @@ class Application(Gtk.Application):
 
         # add accelerators
         accelerators = (
-            ("app.quit", ("<Primary>Q",)),
-            ("app.new", ("<Primary>N",)),
-            ("win.close", ("<Primary>W",)),
+            ("app.quit", ("<Meta>Q",)),
+            ("app.new", ("<Meta>N",)),
+            ("win.close", ("<Meta>W",)),
         )
 
         for accel in accelerators:
             self.set_accels_for_action(accel[0], accel[1])
 
+    @property
+    def menu_model(self):
+        return self._menu_model
+
     def do_activate(self):
         window = ApplicationWindow(application=self)
-        window.show_all()
+        window.show()
 
     def on_about(self, action, param):
 
@@ -130,6 +128,7 @@ class Application(Gtk.Application):
             logo = GdkPixbuf.Pixbuf.new_from_file_at_scale(
                 str(f), 300, -1, True
             )
+            logo = Gdk.Texture.new_for_pixbuf(logo)
 
         about_dialog = Gtk.AboutDialog(
             transient_for=self.get_active_window(),

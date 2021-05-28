@@ -2,54 +2,35 @@
 <interface>
 	<menu id="menubar">
 		<section>
-			<submenu>
-				<attribute name="label">_File</attribute>
-				<section>
-					<attribute name="id">files-submenu</attribute>
-					<item>
-						<attribute name="label">_New window</attribute>
-						<attribute name="action">app.new</attribute>
-					</item>
-					<item>
-						<attribute name="label">Close Window</attribute>
-						<attribute name="action">win.close</attribute>
-					</item>
-					<item>
-						<attribute name="label">_Quit</attribute>
-						<attribute name="action">app.quit</attribute>
-						<attribute name="hidden-when">macos-menubar</attribute>
-					</item>
-				</section>
-			</submenu>
-			<submenu>
-				<attribute name="label">_Window</attribute>
-				<section>
-					<attribute name="id">minimize-section</attribute>
-					<item>
-						<attribute name="label">Minimize</attribute>
-						<attribute name="action">win.minimize</attribute>
-					</item>
-				</section>
-			</submenu>
-			<submenu>
-				<attribute name="label">_Help</attribute>
-				<section>
-					<attribute name="id">help-url-section</attribute>
-					<item>
-						<attribute name="label">Visit RFI-Downloader Github Repository</attribute>
-						<attribute name="action">app.help-url</attribute>
-						<attribute name="target">https://github.com/rosalindfranklininstitute/rfi-downloader</attribute>
-					</item>
-				</section>
-				<section>
-					<attribute name="id">about-section</attribute>
-					<item>
-						<attribute name="label">_About RFI-Downloader</attribute>
-						<attribute name="action">app.about</attribute>
-						<attribute name="hidden-when">macos-menubar</attribute>
-					</item>
-				</section>
-			</submenu>
+			<item>
+				<attribute name="label">_New window</attribute>
+				<attribute name="action">app.new</attribute>
+			</item>
+			<item>
+				<attribute name="label">Close Window</attribute>
+				<attribute name="action">win.close</attribute>
+			</item>
+			<item>
+				<attribute name="label">_Quit</attribute>
+				<attribute name="action">app.quit</attribute>
+			</item>
+		</section>
+		<section>
+			<item>
+				<attribute name="label">Minimize</attribute>
+				<attribute name="action">win.minimize</attribute>
+			</item>
+		</section>
+		<section>
+			<item>
+				<attribute name="label">Visit RFI-Downloader Github Repository</attribute>
+				<attribute name="action">app.help-url</attribute>
+				<attribute name="target">https://github.com/rosalindfranklininstitute/rfi-downloader</attribute>
+			</item>
+			<item>
+				<attribute name="label">_About RFI-Downloader</attribute>
+				<attribute name="action">app.about</attribute>
+			</item>
 		</section>
 	</menu>
 </interface>

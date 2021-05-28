@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import gi
 
-gi.require_version("Gtk", "3.0")
+gi.require_version("Gtk", "4.0")
 from gi.repository import Gtk, Pango, Gio
 
 from .urlobject import URLObject
-from .utils import EXPAND_AND_FILL
+from .utils import EXPAND_AND_FILL, get_border_width
 
 import logging
 
@@ -28,26 +28,20 @@ class URLListBoxRow(Gtk.ListBoxRow):
 
         frame = Gtk.Frame(
             **EXPAND_AND_FILL,
-            margin_bottom=2,
-            margin_top=2,
-            margin_left=2,
-            margin_right=2,
+            **get_border_width(2),
         )
         grid = Gtk.Grid(
             **EXPAND_AND_FILL,
-            margin_bottom=2,
-            margin_top=2,
-            margin_left=2,
-            margin_right=2,
+            **get_border_width(2),
             column_spacing=4,
             row_spacing=2,
         )
-        frame.add(grid)
-        self.add(frame)
+        frame.set_child(grid)
+        self.set_child(frame)
 
         self._image: Gtk.Image = Gtk.Image(
             icon_name="emblem-downloads",
-            icon_size=Gtk.IconSize.DIALOG,
+            icon_size=Gtk.IconSize.LARGE,
             hexpand=False,
             vexpand=True,
             halign=Gtk.Align.START,
@@ -124,8 +118,7 @@ class URLListBoxRow(Gtk.ListBoxRow):
     def _finished_changed_cb(self, url_object: URLObject, param):
         if url_object.props.finished:
             error_msg = url_object.get_error_message()
-            ctxt: Gtk.StyleContext = self._image.get_style_context()
-            ctxt.remove_class("orange")
+            self._image.remove_css_class("orange")
             ga_ctxt = Gio.Application.get_default().google_analytics_context
             if error_msg:
                 logger.info(
@@ -134,19 +127,17 @@ class URLListBoxRow(Gtk.ListBoxRow):
                 # TODO: make error message visible to user (tooltip??)
                 self._status_label.props.label = f"Download failed!"
                 self.props.tooltip_text = error_msg
-                ctxt.add_class("red")
+                self._image.add_css_class("red")
                 ga_ctxt.send_event("DOWNLOAD-FILE", "FAILURE")
             else:
-                ctxt.add_class("green")
+                self._image.add_css_class("green")
                 ga_ctxt.send_event("DOWNLOAD-FILE", "SUCCESS")
 
     def do_query_tooltip(self, x, y, keyboard_mode, tooltip: Gtk.Tooltip):
         if (error_msg := self._url_object.get_error_message()) is None:
             return False
 
-        tooltip.set_icon_from_icon_name(
-            "network-error", Gtk.IconSize.LARGE_TOOLBAR
-        )
+        tooltip.set_icon_from_icon_name("network-error")
         tooltip.set_text(error_msg)
 
         return True
