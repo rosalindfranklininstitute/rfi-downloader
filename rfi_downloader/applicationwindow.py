@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import gi
 
-gi.require_version("Gtk", "3.0")
-gi.require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gdk, Gio, GLib
+gi.require_version("Gtk", "4.0")
+gi.require_version("Gdk", "4.0")
+from gi.repository import Gtk, Gio, GLib, Pango
 
 import logging
 from typing import Optional, Final, List
@@ -17,6 +17,7 @@ from .utils import (
     add_action_entries,
     EXPAND_AND_FILL,
     LongTaskWindow,
+    get_border_width,
 )
 from .downloadmanager import DownloadManager
 from .urlobject import URLObject
@@ -32,8 +33,6 @@ class ApplicationWindow(Gtk.ApplicationWindow):
             title="RFI-Downloader",
             default_height=750,
             default_width=750,
-            border_width=10,
-            type=Gtk.WindowType.TOPLEVEL,
             **kwargs,
         )
 
@@ -48,8 +47,41 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         for action_entry in action_entries:
             add_action_entries(self, *action_entry)
 
+        menu_button = Gtk.MenuButton(
+            valign=Gtk.Align.CENTER,
+            focus_on_click=False,
+            icon_name="open-menu-symbolic",
+            menu_model=self.props.application.menu_model,
+        )
+        titlebar: Gtk.HeaderBar = Gtk.HeaderBar(
+            title_widget=Gtk.Label(label="RFI-Downloader")
+        )
+        titlebar.pack_end(menu_button)
+        self.set_titlebar(titlebar)
+
         main_grid = Gtk.Grid(row_spacing=10, **EXPAND_AND_FILL)
-        self.add(main_grid)
+        self.set_child(main_grid)
+
+        self._info_bar = Gtk.InfoBar(
+            revealed=False,
+            message_type=Gtk.MessageType.QUESTION,
+            hexpand=True,
+            vexpand=False,
+            halign=Gtk.Align.FILL,
+            valign=Gtk.Align.CENTER,
+            **get_border_width(2),
+        )
+        self._info_bar.add_button("Ok", Gtk.ResponseType.OK)
+        self._info_bar.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        label = Gtk.Label(
+            **EXPAND_AND_FILL,
+            use_markup=True,
+            label="<b>Files are still being downloaded!</b>\n"
+            + "Are you sure you want to close this window?",
+        )
+        self._info_bar.add_child(label)
+
+        main_grid.attach(self._info_bar, 0, 0, 1, 1)
 
         controls_grid = Gtk.Grid(
             row_spacing=5,
@@ -58,9 +90,10 @@ class ApplicationWindow(Gtk.ApplicationWindow):
             valign=Gtk.Align.CENTER,
             hexpand=True,
             vexpand=False,
+            **get_border_width(10),
         )
 
-        main_grid.attach(controls_grid, 0, 0, 1, 1)
+        main_grid.attach(controls_grid, 0, 1, 1, 1)
 
         buttons_grid = Gtk.Grid(
             row_spacing=5,
@@ -75,38 +108,41 @@ class ApplicationWindow(Gtk.ApplicationWindow):
 
         play_button = Gtk.Button(
             action_name="win.play",
-            image=Gtk.Image(
-                icon_name="media-playback-start", icon_size=Gtk.IconSize.DIALOG
-            ),
             halign=Gtk.Align.CENTER,
             valign=Gtk.Align.END,
             hexpand=False,
             vexpand=False,
         )
+        icon = Gtk.Image(
+            icon_name="media-playback-start", icon_size=Gtk.IconSize.LARGE
+        )
+        play_button.set_child(icon)
         buttons_grid.attach(play_button, 0, 0, 1, 1)
 
         pause_button = Gtk.Button(
             action_name="win.pause",
-            image=Gtk.Image(
-                icon_name="media-playback-pause", icon_size=Gtk.IconSize.DIALOG
-            ),
             halign=Gtk.Align.CENTER,
             valign=Gtk.Align.CENTER,
             hexpand=False,
             vexpand=False,
         )
+        icon = Gtk.Image(
+            icon_name="media-playback-pause", icon_size=Gtk.IconSize.LARGE
+        )
+        pause_button.set_child(icon)
         buttons_grid.attach(pause_button, 0, 1, 1, 1)
 
         stop_button = Gtk.Button(
             action_name="win.stop",
-            image=Gtk.Image(
-                icon_name="media-playback-stop", icon_size=Gtk.IconSize.DIALOG
-            ),
             halign=Gtk.Align.CENTER,
             valign=Gtk.Align.START,
             hexpand=False,
             vexpand=False,
         )
+        icon = Gtk.Image(
+            icon_name="media-playback-stop", icon_size=Gtk.IconSize.LARGE
+        )
+        stop_button.set_child(icon)
         buttons_grid.attach(stop_button, 0, 2, 1, 1)
 
         # turn the buttons off for now
@@ -123,21 +159,19 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         )
         controls_grid.attach(label, 1, 0, 1, 1)
 
-        self._urls_file_button = Gtk.FileChooserButton(
-            title="Select a file with URLs",
-            action=Gtk.FileChooserAction.OPEN,
+        self._urls_file_button = Gtk.Button(
+            child=Gtk.Label(
+                label="Select a file with URLs",
+                ellipsize=Pango.EllipsizeMode.START,
+            ),
             halign=Gtk.Align.FILL,
             valign=Gtk.Align.CENTER,
             hexpand=True,
             vexpand=False,
         )
-        filter = Gtk.FileFilter()
-        filter.add_mime_type("text/plain")
-        filter.set_name("Plain text files")
-        self._urls_file_button.add_filter(filter)
         self._urls_file_button.connect(
-            "selection-changed",
-            self._on_urls_file_selection_changed,
+            "clicked",
+            self._open_urls_file_chooser_cb,
         )
         controls_grid.attach(self._urls_file_button, 2, 0, 1, 1)
 
@@ -150,26 +184,26 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         )
         controls_grid.attach(label, 1, 1, 1, 1)
 
-        self._destination_button = Gtk.FileChooserButton(
-            title="Select a location to store the files",
-            action=Gtk.FileChooserAction.SELECT_FOLDER,
+        self._destination_button = Gtk.Button(
+            child=Gtk.Label(
+                label="Select a location to store the files",
+                ellipsize=Pango.EllipsizeMode.START,
+            ),
             halign=Gtk.Align.FILL,
             valign=Gtk.Align.CENTER,
             hexpand=True,
             vexpand=False,
         )
         self._destination_button.connect(
-            "selection-changed",
-            self._on_destination_selection_changed,
+            "clicked",
+            self._open_destination_file_chooser_cb,
         )
         controls_grid.attach(self._destination_button, 2, 1, 1, 1)
 
-        sw = Gtk.ScrolledWindow(
-            **EXPAND_AND_FILL, shadow_type=Gtk.ShadowType.IN
-        )
+        sw = Gtk.ScrolledWindow(**EXPAND_AND_FILL, has_frame=True)
         lb = Gtk.ListBox(**EXPAND_AND_FILL)
-        sw.add(lb)
-        main_grid.attach(sw, 0, 1, 1, 1)
+        sw.set_child(lb)
+        main_grid.attach(sw, 0, 2, 1, 1)
 
         self._filename: str = None
         self._destination: str = None
@@ -185,21 +219,100 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         )
 
         # connect delete-event signal handler
-        self.connect("delete-event", self._delete_event_cb)
+        self.connect("close-request", self._delete_event_cb)
+
+    def _open_urls_file_chooser_cb(self, button: Gtk.Button):
+        _filter = Gtk.FileFilter()
+        _filter.add_mime_type("text/plain")
+        _filter.set_name("Plain text files")
+
+        dialog = Gtk.FileChooserNative(
+            action=Gtk.FileChooserAction.OPEN,
+            filter=_filter,
+            title="Select a file with URLs",
+            modal=True,
+            transient_for=self.props.root,
+        )
+        dialog.connect(
+            "response",
+            self._urls_file_chooser_response_cb,
+            button,
+        )
+        dialog.show()
+
+    def _open_destination_file_chooser_cb(self, button: Gtk.Button):
+        dialog = Gtk.FileChooserNative(
+            action=Gtk.FileChooserAction.SELECT_FOLDER,
+            title="Select a location to store the files",
+            modal=True,
+            transient_for=self.props.root,
+        )
+        dialog.connect(
+            "response",
+            self._destination_file_chooser_response_cb,
+            button,
+        )
+        dialog.show()
+
+    def _urls_file_chooser_response_cb(
+        self,
+        native: Gtk.FileChooserNative,
+        response: int,
+        button: Gtk.Button,
+    ):
+        if response == Gtk.ResponseType.ACCEPT:
+            file: Gio.File = native.get_file()
+            filename: str = file.get_path()
+            if (
+                filename
+                and os.path.isfile(filename)
+                and os.access(filename, os.R_OK)
+            ):
+                label: Gtk.Label = button.get_child()
+                label.set_text(filename)
+                self._filename = filename
+            else:
+                self._filename = None
+            self._update_buttons()
+
+        native.destroy()
+
+    def _destination_file_chooser_response_cb(
+        self,
+        native: Gtk.FileChooserNative,
+        response: int,
+        button: Gtk.Button,
+    ):
+        if response == Gtk.ResponseType.ACCEPT:
+            file: Gio.File = native.get_file()
+            filename: str = file.get_path()
+            if (
+                filename
+                and os.path.isdir(filename)
+                and os.access(filename, os.W_OK)
+            ):
+                label: Gtk.Label = button.get_child()
+                label.set_text(filename)
+                self._destination = filename
+            else:
+                self._destination = None
+            self._update_buttons()
+
+        native.destroy()
 
     def _create_widget_func(self, url_object: URLObject, *user_data):
         logger.debug(
             f"Calling _create_widget_func for {url_object.props.filename}"
         )
         rv = URLListBoxRow(url_object)
-        rv.show_all()
+        rv.show()
         return rv
 
-    def _delete_event_dialog_timeout(self, dialog):
+    def _delete_event_dialog_timeout(self):
         if self._download_manager.props.running:
             return GLib.SOURCE_CONTINUE
 
-        dialog.response(Gtk.ResponseType.CLOSE)
+        self._info_bar.response(Gtk.ResponseType.CANCEL)
 
         return GLib.SOURCE_REMOVE
 
@@ -208,44 +321,46 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         if download_manager.props.running is False:
             self.destroy()
 
-    def _delete_event_cb(self, window, event):
+    def _delete_event_cb(self, window):
         # If nothing is running, just close it down
         if not self._download_manager.props.running:
             return False
+        elif self._info_bar.props.revealed:
+            return True
 
-        # else, pop up a dialog asking for confirmation
-        dialog = Gtk.MessageDialog(
-            buttons=Gtk.ButtonsType.OK_CANCEL,
-            message_type=Gtk.MessageType.QUESTION,
-            text="Files are still being downloaded!!",
-            secondary_text="Are you sure you want to close this window?",
-            transient_for=self,
-            modal=True,
-            destroy_with_parent=True,
-        )
+        # else, pop up an InfoBar asking for confirmation
+        self._info_bar.props.revealed = True
 
         source_id = GLib.timeout_add_seconds(
-            1, self._delete_event_dialog_timeout, dialog
+            1,
+            self._delete_event_dialog_timeout,
         )
-        rv = dialog.run()
-        dialog.destroy()
-        GLib.source_remove(source_id)
 
-        if rv in (Gtk.ResponseType.CANCEL, Gtk.ResponseType.DELETE_EVENT):
-            return True
-        elif rv in (Gtk.ResponseType.OK, Gtk.ResponseType.CLOSE):
-            if self._download_manager.props.running:
-                self._download_manager.disconnect(
-                    self._download_manager_finished_changed_handler_id
-                )
-                # hookup signal to downloadmanager running property
-                self._download_manager.connect(
-                    "notify::running", self._delete_event_killer
-                )
-                # stop it manually
-                self._download_manager.stop()
-                return True
-            return False
+        def _delete_event_dialog_response_cb(
+            info_bar: Gtk.InfoBar, response: int
+        ):
+            GLib.source_remove(source_id)
+            info_bar.disconnect(self._delete_event_dialog_response_handler_id)
+            self._info_bar.props.revealed = False
+            if response == Gtk.ResponseType.CANCEL:
+                return
+            elif response == Gtk.ResponseType.OK:
+                if self._download_manager.props.running:
+                    self._download_manager.disconnect(
+                        self._download_manager_finished_changed_handler_id
+                    )
+                    # hookup signal to downloadmanager running property
+                    self._download_manager.connect(
+                        "notify::running", self._delete_event_killer
+                    )
+                    # stop it manually
+                    self._download_manager.stop()
+
+        self._delete_event_dialog_response_handler_id = self._info_bar.connect(
+            "response", _delete_event_dialog_response_cb
+        )
+
+        return True
 
     @property
     def download_manager(self):
@@ -254,30 +369,6 @@ class ApplicationWindow(Gtk.ApplicationWindow):
     @property
     def model(self):
         return self._model
-
-    def _on_urls_file_selection_changed(self, button: Gtk.FileChooserButton):
-        filename: Optional[str] = button.get_filename()
-        if (
-            filename
-            and os.path.isfile(filename)
-            and os.access(filename, os.R_OK)
-        ):
-            self._filename = filename
-        else:
-            self._filename = None
-        self._update_buttons()
-
-    def _on_destination_selection_changed(self, button: Gtk.FileChooserButton):
-        destination: Optional[str] = button.get_filename()
-        if (
-            destination
-            and os.path.isdir(destination)
-            and os.access(destination, os.W_OK)
-        ):
-            self._destination = destination
-        else:
-            self._destination = None
-        self._update_buttons()
 
     def _update_buttons(self):
         if self._filename is not None and self._destination is not None:
@@ -298,10 +389,7 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         task_window = LongTaskWindow(self)
         task_window.set_text("<b>Running preflight check</b>")
         task_window.show()
-        watch_cursor = Gdk.Cursor.new_for_display(
-            Gdk.Display.get_default(), Gdk.CursorType.WATCH
-        )
-        task_window.get_window().set_cursor(watch_cursor)
+        task_window.set_cursor_from_name("wait")
 
         self._model.remove_all()
 
@@ -327,7 +415,7 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         self._download_manager.stop()
 
     def on_minimize(self, action, param):
-        self.iconify()
+        self.minimize()
 
     def on_close(self, action, param):
         self.close()
@@ -341,7 +429,7 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         url_objects: List[URLObject],
         exception_msgs: Optional[List[str]],
     ):
-        task_window.get_window().set_cursor(None)
+        task_window.set_cursor(None)
         task_window.destroy()
 
         if exception_msgs:
@@ -354,12 +442,19 @@ class ApplicationWindow(Gtk.ApplicationWindow):
                 text="The following errors were encountered",
                 secondary_text="\n".join(exception_msgs),
             )
-            dialog.run()
-            dialog.destroy()
-            # if no valid urls were found, dont bother starting the download manager
-            if not len(url_objects):
-                return
 
+            def _exception_messages_dialog_cb(dialog, response):
+                dialog.destroy()
+                # if no valid urls were found, dont bother starting the download manager
+                if not len(url_objects):
+                    return
+                self._download_manager_start(url_objects)
+
+            dialog.connect("response", _exception_messages_dialog_cb)
+
+        self._download_manager_start(url_objects)
+
+    def _download_manager_start(self, url_objects: List[URLObject]):
         for url_object in url_objects:
             self._model.append(url_object)
 

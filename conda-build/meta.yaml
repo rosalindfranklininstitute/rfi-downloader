@@ -22,11 +22,11 @@ requirements:
   run:
     - pygobject
     - python
-    - gtk3
+    - gtk4
     - adwaita-icon-theme
     - librsvg
     - bugsnag
-    - libsoup
+    - libsoup <3
     - humanfriendly
 
 test:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import gi
 
-gi.require_version("Gtk", "3.0")
+gi.require_version("Gtk", "4.0")
 gi.require_version("Soup", "2.4")
 from gi.repository import Gio, GLib, Gtk, Soup
 
@@ -26,6 +26,23 @@ EXPAND_AND_FILL: Final[Dict[str, Any]] = dict(
 )
 
 logger = logging.getLogger(__name__)
+
+
+def get_border_width(width: int) -> Dict[str, int]:
+    """Replicates border_width parameter from Gtk3, by producing a dict equivalent margin parameters
+
+    Args:
+        width (int): the border width
+
+    Returns:
+        Dict[str, int]: the dict with margin parameters
+    """
+    return dict(
+        margin_start=width,
+        margin_end=width,
+        margin_top=width,
+        margin_bottom=width,
+    )
 
 
 def add_action_entries(
@@ -81,19 +98,19 @@ class LongTaskWindow(Gtk.Window):
         kwargs.update(
             dict(
                 transient_for=parent_window,
-                window_position=Gtk.WindowPosition.CENTER_ON_PARENT,
                 modal=True,
                 default_width=250,
                 default_height=100,
-                type=Gtk.WindowType.TOPLEVEL,
                 destroy_with_parent=True,
                 decorated=False,
-                border_width=5,
             )
         )
         Gtk.Window.__init__(self, *args, **kwargs)
         main_grid = Gtk.Grid(
-            column_spacing=10, row_spacing=10, **EXPAND_AND_FILL
+            column_spacing=10,
+            row_spacing=10,
+            **EXPAND_AND_FILL,
+            **get_border_width(5),
         )
         self._label = Gtk.Label(wrap=True, **EXPAND_AND_FILL)
         main_grid.attach(self._label, 0, 0, 1, 1)
@@ -101,9 +118,8 @@ class LongTaskWindow(Gtk.Window):
             label="This may take a while...",
         )
         main_grid.attach(label, 0, 1, 1, 1)
-        self.add(main_grid)
-        self.connect("delete-event", Gtk.true)
-        main_grid.show_all()
+        self.set_child(main_grid)
+        main_grid.show()
 
     def set_text(self, text: str):
         self._label.set_markup(text)

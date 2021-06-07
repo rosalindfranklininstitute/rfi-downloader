@@ -3,12 +3,12 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.8
-  - gtk3
+  - gtk4
   - pygobject
   - setuptools
   - pip
   - adwaita-icon-theme
   - librsvg
-  - libsoup
+  - libsoup<3
   - bugsnag
   - humanfriendly

@@ -6,3 +6,4 @@ build
 .ropeproject
 .env
 .vscode
+.DS_Store
